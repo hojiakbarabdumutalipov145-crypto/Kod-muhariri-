@@ -1,0 +1,306 @@
+name: APK yigish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Android loyihasini tayyorlash
+        run: |
+          set -e
+          test -f index.html
+          mkdir -p app/src/main/java/uz/kodmuharriri app/src/main/assets app/src/main/res/values app/src/main/res/drawable app/src/main/res/mipmap-anydpi-v26
+          cp index.html app/src/main/assets/index.html
+          cat > settings.gradle.kts <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "KodMuharriri"
+          include(":app")
+          EOF
+          cat > build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+          }
+          EOF
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          kotlin.code.style=official
+          EOF
+          cat > app/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "uz.kodmuharriri"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "uz.kodmuharriri"
+                  minSdk = 26
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      isMinifyEnabled = false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.activity:activity-ktx:1.9.2")
+              implementation("androidx.webkit:webkit:1.11.0")
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:supportsRtl="false"
+                  android:theme="@style/Theme.KodMuharriri">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:windowSoftInputMode="adjustResize"
+                      android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+
+          </manifest>
+          EOF
+          cat > app/src/main/java/uz/kodmuharriri/MainActivity.kt <<'EOF'
+          package uz.kodmuharriri
+
+          import android.annotation.SuppressLint
+          import android.content.Intent
+          import android.net.Uri
+          import android.os.Bundle
+          import android.webkit.ValueCallback
+          import android.webkit.WebChromeClient
+          import android.webkit.WebResourceRequest
+          import android.webkit.WebResourceResponse
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
+          import androidx.activity.ComponentActivity
+          import androidx.activity.result.contract.ActivityResultContracts
+          import androidx.webkit.WebViewAssetLoader
+
+          class MainActivity : ComponentActivity() {
+
+              private lateinit var web: WebView
+              private var fileCallback: ValueCallback<Array<Uri>>? = null
+
+              // Qurilmadan fayl tanlash (muharrirdagi "Qurilmadan fayl ochish" tugmasi)
+              private val picker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+                  val data = res.data
+                  var uris: Array<Uri>? = null
+                  if (res.resultCode == RESULT_OK && data != null) {
+                      val clip = data.clipData
+                      uris = when {
+                          clip != null -> Array(clip.itemCount) { clip.getItemAt(it).uri }
+                          data.data != null -> arrayOf(data.data!!)
+                          else -> null
+                      }
+                  }
+                  fileCallback?.onReceiveValue(uris)
+                  fileCallback = null
+              }
+
+              @SuppressLint("SetJavaScriptEnabled")
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  web = WebView(this)
+                  setContentView(web)
+
+                  // Fayllar https://appassets.androidplatform.net manzilidan beriladi,
+                  // shunda localStorage va Web Worker odatdagi saytdagidek ishlaydi.
+                  val loader = WebViewAssetLoader.Builder()
+                      .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+                      .build()
+
+                  web.settings.apply {
+                      javaScriptEnabled = true
+                      domStorageEnabled = true
+                      allowFileAccess = false
+                      textZoom = 100
+                  }
+
+                  web.webViewClient = object : WebViewClient() {
+                      override fun shouldInterceptRequest(
+                          view: WebView,
+                          request: WebResourceRequest
+                      ): WebResourceResponse? = loader.shouldInterceptRequest(request.url)
+
+                      override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                          val url = request.url
+                          if (url.host == "appassets.androidplatform.net") return false
+                          startActivity(Intent(Intent.ACTION_VIEW, url))
+                          return true
+                      }
+                  }
+
+                  web.webChromeClient = object : WebChromeClient() {
+                      override fun onShowFileChooser(
+                          webView: WebView,
+                          callback: ValueCallback<Array<Uri>>,
+                          params: FileChooserParams
+                      ): Boolean {
+                          fileCallback?.onReceiveValue(null)
+                          fileCallback = callback
+                          return try {
+                              picker.launch(params.createIntent())
+                              true
+                          } catch (e: Exception) {
+                              fileCallback = null
+                              false
+                          }
+                      }
+                  }
+
+                  if (savedInstanceState != null) {
+                      web.restoreState(savedInstanceState)
+                  } else {
+                      web.loadUrl("https://appassets.androidplatform.net/assets/index.html")
+                  }
+              }
+
+              override fun onSaveInstanceState(outState: Bundle) {
+                  super.onSaveInstanceState(outState)
+                  web.saveState(outState)
+              }
+
+              override fun onPause() {
+                  super.onPause()
+                  web.onPause()
+              }
+
+              override fun onResume() {
+                  super.onResume()
+                  web.onResume()
+              }
+
+              override fun onDestroy() {
+                  web.destroy()
+                  super.onDestroy()
+              }
+          }
+          EOF
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <resources>
+              <string name="app_name">Kod muharriri</string>
+          </resources>
+          EOF
+          cat > app/src/main/res/values/colors.xml <<'EOF'
+          <resources>
+              <color name="ic_bg">#1E1E1E</color>
+          </resources>
+          EOF
+          cat > app/src/main/res/values/themes.xml <<'EOF'
+          <resources>
+              <style name="Theme.KodMuharriri" parent="android:Theme.DeviceDefault.NoActionBar">
+                  <item name="android:statusBarColor">#1E1E1E</item>
+                  <item name="android:navigationBarColor">#1E1E1E</item>
+                  <item name="android:windowBackground">#1E1E1E</item>
+              </style>
+          </resources>
+          EOF
+          cat > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_bg" />
+              <foreground android:drawable="@drawable/ic_fg" />
+          </adaptive-icon>
+          EOF
+          cat > app/src/main/res/drawable/ic_fg.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:pathData="M43,42 L31,54 L43,66"
+                  android:strokeColor="#3794FF"
+                  android:strokeWidth="5"
+                  android:strokeLineCap="round"
+                  android:strokeLineJoin="round" />
+              <path
+                  android:pathData="M65,42 L77,54 L65,66"
+                  android:strokeColor="#3794FF"
+                  android:strokeWidth="5"
+                  android:strokeLineCap="round"
+                  android:strokeLineJoin="round" />
+              <path
+                  android:pathData="M59,38 L49,70"
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="5"
+                  android:strokeLineCap="round" />
+          </vector>
+          EOF
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: APK yigish
+        run: gradle assembleDebug --no-daemon
+
+      - name: Releases sahifasiga joylash
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Kod muharriri ${{ github.run_number }}
+          files: app/build/outputs/apk/debug/app-debug.apk

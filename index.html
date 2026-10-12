@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Код муҳаррири</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Тузилиши: чапда фаоллик панели, ёнида файллар панели, ўртада tab'лар ва муҳаррир, пастда чиқиш панели ва ҳолат қатори */
+:root{
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;
+  --bg:#1e1e1e; --side:#252526; --act:#333333; --actfg:#858585; --tab:#2d2d2d;
+  --fg:#cccccc; --code:#d4d4d4; --muted:#8b8b8b; --border:#333333; --accent:#0e7fd1;
+  --status:#007acc; --sel:rgba(58,130,210,.42); --curline:rgba(255,255,255,.05);
+  --hover:#2a2d2e; --liston:#37373d; --input:#3c3c3c; --inputb:#4a4a4a;
+  --gutter:#858585; --hit:rgba(234,92,0,.38); --err:#f48771; --ok:#89d185; --scroll:#4d4d4d;
+  --k-kw:#569cd6; --k-str:#ce9178; --k-num:#b5cea8; --k-com:#6a9955; --k-fn:#dcdcaa;
+  --k-typ:#4ec9b0; --k-prop:#9cdcfe; --k-tag:#569cd6; --k-attr:#9cdcfe; --k-punc:#808080;
+  --k-sel:#d7ba7d; --k-dec:#c586c0;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#ffffff; --side:#f3f3f3; --act:#2c2c2c; --actfg:rgba(255,255,255,.55); --tab:#ececec;
+    --fg:#3b3b3b; --code:#1f1f1f; --muted:#6b6b6b; --border:#dcdcdc; --accent:#005fb8;
+    --status:#007acc; --sel:rgba(38,120,220,.28); --curline:rgba(0,0,0,.045);
+    --hover:#e8e8e8; --liston:#e4e6f1; --input:#ffffff; --inputb:#cbcbcb;
+    --gutter:#237893; --hit:rgba(234,92,0,.33); --err:#cd3131; --ok:#2e7d32; --scroll:#c1c1c1;
+    --k-kw:#0000ff; --k-str:#a31515; --k-num:#098658; --k-com:#008000; --k-fn:#795e26;
+    --k-typ:#267f99; --k-prop:#0451a5; --k-tag:#800000; --k-attr:#e50000; --k-punc:#800000;
+    --k-sel:#800000; --k-dec:#af00db;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#ffffff; --side:#f3f3f3; --act:#2c2c2c; --actfg:rgba(255,255,255,.55); --tab:#ececec;
+  --fg:#3b3b3b; --code:#1f1f1f; --muted:#6b6b6b; --border:#dcdcdc; --accent:#005fb8;
+  --status:#007acc; --sel:rgba(38,120,220,.28); --curline:rgba(0,0,0,.045);
+  --hover:#e8e8e8; --liston:#e4e6f1; --input:#ffffff; --inputb:#cbcbcb;
+  --gutter:#237893; --hit:rgba(234,92,0,.33); --err:#cd3131; --ok:#2e7d32; --scroll:#c1c1c1;
+  --k-kw:#0000ff; --k-str:#a31515; --k-num:#098658; --k-com:#008000; --k-fn:#795e26;
+  --k-typ:#267f99; --k-prop:#0451a5; --k-tag:#800000; --k-attr:#e50000; --k-punc:#800000;
+  --k-sel:#800000; --k-dec:#af00db;
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--ui);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,.row:focus-visible{outline:1px solid var(--accent);outline-offset:-1px}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.s{width:16px;height:16px}
+
+#app{position:relative;height:100%;display:grid;grid-template-columns:48px auto minmax(0,1fr);grid-template-rows:minmax(0,1fr) 22px}
+
+/* фаоллик панели */
+.activity{grid-column:1;grid-row:1;background:var(--act);display:flex;flex-direction:column;justify-content:space-between;min-height:0}
+.act{width:48px;height:48px;display:grid;place-items:center;color:var(--actfg);position:relative}
+.act:hover{color:#fff}
+.act.on{color:#fff}
+.act.on::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;background:#fff}
+
+/* ёнбош панель */
+.side{grid-column:2;grid-row:1;width:268px;background:var(--side);border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+#app:not(.sideopen) .side{display:none}
+.view{display:flex;flex-direction:column;min-height:0;flex:1}
+.view[hidden]{display:none}
+.vhead{height:35px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px;font-size:11px;letter-spacing:.08em;color:var(--muted);flex:none}
+.vtools{display:flex;gap:2px}
+.vtools button,.ract button,.tabtools button{width:28px;height:28px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.vtools button:hover,.ract button:hover,.tabtools button:hover{background:var(--hover);color:var(--fg)}
+.proj{padding:2px 8px 4px 20px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--fg);flex:none}
+.tree{overflow:auto;flex:1;min-height:0;scrollbar-width:thin;scrollbar-color:var(--scroll) transparent}
+.row{display:flex;align-items:center;gap:7px;min-height:28px;padding:0 4px 0 20px;cursor:pointer;color:var(--fg)}
+.row:hover{background:var(--hover)}
+.row.on{background:var(--liston)}
+.row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.edit{cursor:default;padding-right:8px}
+.row.edit input{flex:1;min-width:0;height:22px;padding:0 5px;background:var(--input);border:1px solid var(--accent);outline:0}
+.ract{display:flex;opacity:0}
+.row:hover .ract,.row.on .ract,.row:focus-within .ract{opacity:1}
+@media (hover:none){.ract{opacity:1}}
+.ract .danger{width:auto;padding:0 8px;color:#fff;background:#c42b1c;font-size:11.5px}
+.ract .danger:hover{background:#d93a2a;color:#fff}
+.badge{width:20px;flex:none;text-align:center;font:700 10.5px/1 var(--mono)}
+.hint{padding:10px 20px;color:var(--muted);font-size:12px}
+
+.sbox{padding:2px 12px 8px}
+.sbox input,.palbox input,.find input{width:100%;height:28px;padding:0 8px;background:var(--input);border:1px solid var(--inputb);outline:0;border-radius:2px}
+.sbox input:focus,.palbox input:focus,.find input:focus{border-color:var(--accent)}
+.gres{overflow:auto;flex:1;min-height:0;scrollbar-width:thin;scrollbar-color:var(--scroll) transparent}
+.gf{display:flex;align-items:center;gap:6px;padding:3px 12px;font-weight:600;cursor:default}
+.gf .cnt{margin-left:auto;font-weight:400;font-size:11px;color:var(--muted);background:var(--hover);border-radius:9px;padding:0 6px}
+.mr{padding:2px 12px 2px 32px;font:12px/1.5 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--muted)}
+.mr:hover{background:var(--hover)}
+.mr b{color:var(--fg);background:var(--hit);font-weight:400}
+
+.set{padding:6px 20px 20px;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
+.sl{font-size:11px;letter-spacing:.06em;color:var(--muted);margin-top:10px;text-transform:uppercase}
+.seg{display:flex;border:1px solid var(--inputb);border-radius:3px;overflow:hidden}
+.seg button{flex:1;height:30px;background:var(--input)}
+.seg button+button{border-left:1px solid var(--inputb)}
+.seg button.on{background:var(--accent);color:#fff}
+.step{display:flex;align-items:center;gap:0;width:max-content;border:1px solid var(--inputb);border-radius:3px;overflow:hidden}
+.step button{width:36px;height:30px;background:var(--input);font-size:16px}
+.step span{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.btn{height:30px;padding:0 12px;background:var(--accent);color:#fff;border-radius:2px;align-self:flex-start}
+.btn.alt{background:var(--input);color:var(--fg);border:1px solid var(--inputb)}
+.btn.warn{background:#c42b1c}
+.keysl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.keysl li{display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
+kbd{font:11px var(--mono);padding:1px 5px;border:1px solid var(--inputb);border-radius:3px;background:var(--input);color:var(--fg)}
+
+/* асосий қисм */
+.main{grid-column:3;grid-row:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+.tabbar{display:flex;background:var(--side);flex:none;min-width:0}
+.tabs{display:flex;flex:1;min-width:0;overflow-x:auto;position:relative;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:7px;flex:none;height:35px;padding:0 6px 0 12px;background:var(--tab);color:var(--muted);border-right:1px solid var(--side);border-top:1px solid transparent;cursor:pointer;white-space:nowrap;user-select:none}
+.tab.on{background:var(--bg);color:var(--fg);border-top-color:var(--accent)}
+.tab .x{width:22px;height:22px;display:grid;place-items:center;border-radius:4px;color:inherit;opacity:.7}
+.tab .x:hover{background:var(--hover);opacity:1}
+.tabtools{display:flex;align-items:center;padding:0 4px;flex:none}
+.tabtools .go{color:var(--ok)}
+
+.find{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--side);border-bottom:1px solid var(--border);flex:none}
+.find input{flex:1;min-width:0}
+.find .fc{min-width:56px;text-align:center;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.find button{width:28px;height:28px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.find button:hover{background:var(--hover);color:var(--fg)}
+
+.editor{position:relative;flex:1;min-height:0;display:flex;background:var(--bg);--digits:2}
+.gutter{flex:none;overflow:hidden;width:calc(var(--digits) * 1ch + 30px);font:var(--fs,14px)/var(--lh,21px) var(--mono);color:var(--gutter);user-select:none;padding-top:8px}
+.gutter pre{margin:0;padding:0 14px 0 0;text-align:right;font:inherit;display:block;will-change:transform}
+.code{position:relative;flex:1;min-width:0;overflow:hidden}
+.curline{position:absolute;left:0;right:0;height:var(--lh,21px);background:var(--curline);pointer-events:none}
+.hit{position:absolute;background:var(--hit);outline:1px solid var(--accent);pointer-events:none}
+.hl,#ta{position:absolute;inset:0;margin:0;padding:8px 40px 40vh 12px;border:0;font-family:var(--mono);font-size:var(--fs,14px);line-height:var(--lh,21px);letter-spacing:0;tab-size:2;-moz-tab-size:2;white-space:pre;font-variant-ligatures:none;font-kerning:none;word-spacing:0}
+.hl{overflow:hidden;color:var(--code);pointer-events:none}
+#ta{overflow:auto;resize:none;outline:0;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--code);scrollbar-width:thin;scrollbar-color:var(--scroll) transparent;width:100%;height:100%;border-radius:0}
+#ta::selection{background:var(--sel);color:transparent}
+.empty{position:absolute;inset:0;z-index:5;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;color:var(--muted)}
+.empty h2{margin:0;font-size:20px;font-weight:500;color:var(--fg)}
+.empty .acts2{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.k-kw{color:var(--k-kw)}.k-str{color:var(--k-str)}.k-num{color:var(--k-num)}.k-com{color:var(--k-com);font-style:italic}
+.k-fn{color:var(--k-fn)}.k-typ{color:var(--k-typ)}.k-prop{color:var(--k-prop)}.k-tag{color:var(--k-tag)}
+.k-attr{color:var(--k-attr)}.k-punc{color:var(--k-punc)}.k-sel{color:var(--k-sel)}.k-dec{color:var(--k-dec)}
+.k-head{color:var(--k-kw);font-weight:700}
+
+.keys{display:none;gap:4px;padding:4px 6px;background:var(--side);border-top:1px solid var(--border);overflow-x:auto;flex:none;scrollbar-width:none}
+.keys::-webkit-scrollbar{display:none}
+.keys button{flex:none;min-width:38px;height:36px;padding:0 8px;border-radius:4px;background:var(--input);font:15px var(--mono);display:grid;place-items:center}
+.keys button:active{background:var(--accent);color:#fff}
+@media (pointer:coarse){.keys{display:flex}}
+
+.panel{height:34%;min-height:120px;border-top:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg);flex:none}
+.phead{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 6px 0 12px;flex:none}
+.ptabs{display:flex;gap:16px}
+.ptabs button{height:32px;font-size:11px;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid transparent}
+.ptabs button.on{color:var(--fg);border-bottom-color:var(--fg)}
+.ptools{display:flex}
+.ptools button{width:28px;height:28px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.ptools button:hover{background:var(--hover);color:var(--fg)}
+.out{flex:1;min-height:0;margin:0;padding:4px 12px 10px;overflow:auto;font:12.5px/1.55 var(--mono);scrollbar-width:thin;scrollbar-color:var(--scroll) transparent}
+.out div{white-space:pre-wrap;word-break:break-word}
+.l-error{color:var(--err)}.l-warn{color:#cca700}.l-sys{color:var(--muted)}
+#web{flex:1;min-height:0;width:100%;border:0;background:#fff;display:block}
+
+.status{grid-column:1/-1;grid-row:2;display:flex;justify-content:space-between;align-items:stretch;background:var(--status);color:#fff;font-size:12px;overflow:hidden;white-space:nowrap}
+.status>div{display:flex;align-items:stretch;min-width:0}
+.status span,.status button{display:flex;align-items:center;padding:0 9px;color:#fff}
+.status button:hover{background:rgba(255,255,255,.14)}
+.status .num{font-variant-numeric:tabular-nums}
+
+.backdrop{display:none;position:absolute;left:44px;right:0;top:0;bottom:22px;z-index:15;background:rgba(0,0,0,.45)}
+.toast{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:60;max-width:calc(100% - 32px);padding:7px 14px;background:var(--side);color:var(--fg);border:1px solid var(--inputb);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.pal{position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.28);display:flex;justify-content:center;align-items:flex-start;padding:7vh 12px 0}
+.palbox{width:min(580px,100%);background:var(--side);border:1px solid var(--inputb);box-shadow:0 8px 30px rgba(0,0,0,.45);padding:6px;display:flex;flex-direction:column;gap:6px;max-height:70%}
+.palbox input{height:32px}
+.pall{overflow:auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--scroll) transparent}
+.ph{padding:5px 8px 2px;font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.pi{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:0 8px;min-height:30px;cursor:pointer}
+.pi.on{background:var(--liston)}
+.pi .pk{color:var(--muted);font:11px var(--mono);white-space:nowrap}
+.pi .pn{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pnone{padding:10px 8px;color:var(--muted)}
+
+@media (max-width:760px){
+  #app{grid-template-columns:44px minmax(0,1fr)}
+  .main{grid-column:2}
+  .act{width:44px;height:44px}
+  .side{position:absolute;left:44px;top:0;bottom:22px;width:min(300px,calc(100% - 44px));z-index:20;box-shadow:6px 0 20px rgba(0,0,0,.35)}
+  #app.sideopen .backdrop{display:block}
+  .panel{height:46%}
+  .hide-s{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-files" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
+  <symbol id="i-cmd" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l3 2-3 2M12 15h5"/></symbol>
+  <symbol id="i-newfile" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24"><path d="M4 6l5 5-5 5M12 18h8"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-clear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 16l8-8"/></symbol>
+</svg>
+
+<div id="app" class="sideopen">
+  <nav class="activity" aria-label="Асосий меню">
+    <div>
+      <button class="act on" data-view="files" title="Файллар (Ctrl+B)" aria-label="Файллар"><svg class="i"><use href="#i-files"/></svg></button>
+      <button class="act" data-view="search" title="Қидирув (Ctrl+Shift+F)" aria-label="Қидирув"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="act" data-view="settings" title="Созламалар" aria-label="Созламалар"><svg class="i"><use href="#i-sliders"/></svg></button>
+    </div>
+    <div>
+      <button class="act" id="btnPal" title="Буйруқлар (Ctrl+Shift+P)" aria-label="Буйруқлар"><svg class="i"><use href="#i-cmd"/></svg></button>
+    </div>
+  </nav>
+
+  <aside class="side" id="side">
+    <section class="view" id="view-files">
+      <header class="vhead"><span>ФАЙЛЛАР</span>
+        <span class="vtools">
+          <button id="btnNew" title="Янги файл" aria-label="Янги файл"><svg class="i s"><use href="#i-newfile"/></svg></button>
+          <button id="btnOpen" title="Қурилмадан файл очиш" aria-label="Қурилмадан файл очиш"><svg class="i s"><use href="#i-folder"/></svg></button>
+        </span>
+      </header>
+      <div class="proj">МЕНИНГ ЛОЙИҲАМ</div>
+      <div class="tree" id="tree"></div>
+    </section>
+    <section class="view" id="view-search" hidden>
+      <header class="vhead"><span>ҚИДИРУВ</span></header>
+      <div class="sbox"><input id="gq" type="text" placeholder="Ҳамма файллардан қидириш" autocomplete="off" spellcheck="false"></div>
+      <div class="gres" id="gres"></div>
+    </section>
+    <section class="view" id="view-settings" hidden>
+      <header class="vhead"><span>СОЗЛАМАЛАР</span></header>
+      <div class="set">
+        <div class="sl">Мавзу</div>
+        <div class="seg" id="segTheme">
+          <button data-t="auto">Тизим</button><button data-t="dark">Қоронғи</button><button data-t="light">Ёруғ</button>
+        </div>
+        <div class="sl">Ҳарф катталиги</div>
+        <div class="step"><button id="fsMinus" aria-label="Кичиклаштириш">−</button><span id="fsVal">14</span><button id="fsPlus" aria-label="Катталаштириш">+</button></div>
+        <div class="sl">Тез тугмалар</div>
+        <ul class="keysl">
+          <li><span><kbd>Ctrl</kbd> <kbd>P</kbd></span><span>Файл очиш</span></li>
+          <li><span><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd></span><span>Буйруқлар</span></li>
+          <li><span><kbd>Ctrl</kbd> <kbd>F</kbd></span><span>Файлдан топиш</span></li>
+          <li><span><kbd>Ctrl</kbd> <kbd>/</kbd></span><span>Изоҳга ўтказиш</span></li>
+          <li><span><kbd>Ctrl</kbd> <kbd>Enter</kbd></span><span>Ишга тушириш</span></li>
+          <li><span><kbd>Ctrl</kbd> <kbd>B</kbd></span><span>Ёнбош панель</span></li>
+        </ul>
+        <div class="sl">Лойиҳа</div>
+        <button class="btn alt" id="btnReset">Намуна файлларни қайтариш</button>
+      </div>
+    </section>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main class="main">
+    <div class="tabbar">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="tabtools">
+        <button id="btnFind" title="Файлдан топиш (Ctrl+F)" aria-label="Топиш"><svg class="i s"><use href="#i-search"/></svg></button>
+        <button id="btnRun" class="go" title="Ишга тушириш (Ctrl+Enter)" aria-label="Ишга тушириш"><svg class="i s"><use href="#i-play"/></svg></button>
+        <button id="btnPanel" title="Чиқиш панели (Ctrl+J)" aria-label="Чиқиш панели"><svg class="i s"><use href="#i-term"/></svg></button>
+      </div>
+    </div>
+    <div class="find" id="find" hidden>
+      <input id="fq" type="text" placeholder="Топиш" autocomplete="off" spellcheck="false">
+      <span class="fc" id="fc">0 / 0</span>
+      <button id="fPrev" title="Олдинги" aria-label="Олдинги"><svg class="i s"><use href="#i-up"/></svg></button>
+      <button id="fNext" title="Кейинги" aria-label="Кейинги"><svg class="i s"><use href="#i-down"/></svg></button>
+      <button id="fClose" title="Ёпиш" aria-label="Ёпиш"><svg class="i s"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="editor" id="editor">
+      <div class="gutter" id="gutter"><pre id="gnums"></pre></div>
+      <div class="code" id="code">
+        <div class="curline" id="curline"></div>
+        <div class="hit" id="hit" hidden></div>
+        <pre class="hl" id="hl" aria-hidden="true"></pre>
+        <textarea id="ta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Код муҳаррири"></textarea>
+        <span id="meas" aria-hidden="true" style="position:absolute;visibility:hidden;white-space:pre;left:0;top:0;font-family:var(--mono);font-size:var(--fs,14px)">MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM</span>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <h2>Файл очилмаган</h2>
+        <div>Файлни танланг ёки янгисини яратинг.</div>
+        <div class="acts2">
+          <button class="btn" id="eNew">Янги файл</button>
+          <button class="btn alt" id="eOpen">Қурилмадан очиш</button>
+          <button class="btn alt" id="ePal">Файл қидириш</button>
+        </div>
+      </div>
+    </div>
+    <div class="keys" id="keys" aria-label="Қўшимча тугмалар"></div>
+    <section class="panel" id="panel" hidden>
+      <div class="phead">
+        <div class="ptabs" id="ptabs"><button data-p="out" class="on">ЧИҚИШ</button><button data-p="web">КЎРИНИШ</button></div>
+        <div class="ptools">
+          <button id="pClear" title="Тозалаш" aria-label="Тозалаш"><svg class="i s"><use href="#i-clear"/></svg></button>
+          <button id="pClose" title="Ёпиш" aria-label="Ёпиш"><svg class="i s"><use href="#i-x"/></svg></button>
+        </div>
+      </div>
+      <pre class="out" id="out"></pre>
+      <iframe id="web" sandbox="allow-scripts" title="Саҳифа кўриниши" hidden></iframe>
+    </section>
+  </main>
+
+  <footer class="status">
+    <div>
+      <span class="num" id="stPos">Қатор 1, Устун 1</span>
+      <span class="num hide-s" id="stSel"></span>
+    </div>
+    <div>
+      <span class="hide-s" id="stTab">Бўшлиқлар: 2</span>
+      <span class="hide-s">UTF-8</span>
+      <span id="stLang">Оддий матн</span>
+      <button id="stPanel">Чиқиш</button>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" hidden></div>
+  <div class="pal" id="pal" hidden>
+    <div class="palbox">
+      <input id="palq" type="text" placeholder="Файл номи ёки > билан буйруқ" autocomplete="off" spellcheck="false">
+      <div class="pall" id="pall"></div>
+    </div>
+  </div>
+  <input type="file" id="filein" multiple hidden>
+</div>
+
+<script>
+(function () {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const KEY = 'kod-muharriri-v1';
+const mobileMQ = window.matchMedia('(max-width:760px)');
+
+/* ---------- намуна лойиҳа ---------- */
+const SAMPLE = [
+['index.html', [
+'<!DOCTYPE html>',
+'<html lang="uz">',
+'<head>',
+'  <meta charset="UTF-8">',
+'  <title>Ҳисоблагич</title>',
+'  <link rel="stylesheet" href="style.css">',
+'</head>',
+'<body>',
+'  <main>',
+'    <h1>Ҳисоблагич</h1>',
+'    <p id="son">0</p>',
+'    <button id="btn">Босиш</button>',
+'  </main>',
+'  <script src="app.js"><\/script>',
+'</body>',
+'</html>', ''].join('\n')],
+['style.css', [
+'body {',
+'  font-family: system-ui, sans-serif;',
+'  display: grid;',
+'  place-items: center;',
+'  min-height: 100vh;',
+'  margin: 0;',
+'  background: #f4f6fb;',
+'}',
+'',
+'main { text-align: center; }',
+'',
+'#son {',
+'  font-size: 4rem;',
+'  margin: 0.5rem 0;',
+'  color: #2b6cb0;',
+'}',
+'',
+'button {',
+'  padding: 0.6rem 1.4rem;',
+'  border: 0;',
+'  border-radius: 8px;',
+'  background: #2b6cb0;',
+'  color: white;',
+'  font-size: 1rem;',
+'}', ''].join('\n')],
+['app.js', [
+'// Оддий ҳисоблагич',
+'const sonlar = [3, 8, 12, 5];',
+'',
+'function yigindi(royxat) {',
+'  return royxat.reduce((a, b) => a + b, 0);',
+'}',
+'',
+'console.log("Сонлар:", sonlar);',
+'console.log("Йиғинди:", yigindi(sonlar));',
+'console.log("Ўртача:", yigindi(sonlar) / sonlar.length);',
+'',
+'if (typeof document !== "undefined") {',
+'  let hisob = 0;',
+'  const son = document.querySelector("#son");',
+'  document.querySelector("#btn").addEventListener("click", () => {',
+'    hisob++;',
+'    son.textContent = hisob;',
+'  });',
+'}', ''].join('\n')],
+['hisob.py', [
+'# Оддий Python мисоли',
+'def faktorial(n):',
+'    if n <= 1:',
+'        return 1',
+'    return n * faktorial(n - 1)',
+'',
+'for i in range(1, 6):',
+'    print(i, faktorial(i))', ''].join('\n')],
+['data.json', [
+'{',
+'  "nom": "Менинг лойиҳам",',
+'  "versiya": 1,',
+'  "faol": true,',
+'  "teglar": ["код", "web"]',
+'}', ''].join('\n')],
+['README.md', [
+'# Менинг лойиҳам',
+'',
+'Бу код муҳарририда ёзилган **намуна** лойиҳа.',
+'',
+'- index.html - саҳифа',
+'- style.css - дизайн',
+'- app.js - дастур (Ишга тушириш тугмаси билан синаб кўринг)',
+'',
+'Файл очиш: Ctrl+P. Сақлаш автоматик.', ''].join('\n')]
+];
+
+function fresh() {
+  const files = SAMPLE.map((f, i) => ({ id: 'f' + (i + 1), name: f[0], text: f[1] }));
+  return { files, nextId: files.length + 1, open: ['f1', 'f3'], active: 'f3', theme: 'auto', fs: 14 };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || !Array.isArray(d.files)) return null;
+    d.files = d.files.filter(f => f && typeof f.id === 'string' && typeof f.name === 'string' && typeof f.text === 'string');
+    d.open = (Array.isArray(d.open) ? d.open : []).filter(id => d.files.some(f => f.id === id));
+    if (!d.files.some(f => f.id === d.active)) d.active = d.open[0] || null;
+    d.nextId = d.nextId || d.files.length + 1;
+    d.theme = ['auto', 'dark', 'light'].includes(d.theme) ? d.theme : 'auto';
+    d.fs = Math.min(24, Math.max(10, d.fs | 0 || 14));
+    return d;
+  } catch (e) { return null; }
+}
+let S = load() || fresh();
+let saveT = null;
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      files: S.files.map(f => ({ id: f.id, name: f.name, text: f.text })),
+      nextId: S.nextId, open: S.open, active: S.active, theme: S.theme, fs: S.fs
+    }));
+  } catch (e) {}
+}
+function saveSoon() { clearTimeout(saveT); saveT = setTimeout(persist, 450); }
+window.addEventListener('pagehide', persist);
+document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+
+/* ---------- тил ва ранглаш ---------- */
+const LANGS = { js: 'JavaScript', ts: 'TypeScript', html: 'HTML', css: 'CSS', py: 'Python', json: 'JSON', md: 'Markdown', text: 'Оддий матн' };
+function langOf(name) {
+  const m = /\.([A-Za-z0-9]+)$/.exec(name || '');
+  const e = m ? m[1].toLowerCase() : '';
+  if (e === 'js' || e === 'mjs' || e === 'jsx' || e === 'cjs') return 'js';
+  if (e === 'ts' || e === 'tsx') return 'ts';
+  if (e === 'html' || e === 'htm') return 'html';
+  if (e === 'css') return 'css';
+  if (e === 'py') return 'py';
+  if (e === 'json') return 'json';
+  if (e === 'md' || e === 'markdown') return 'md';
+  return 'text';
+}
+const BADGES = { js: ['JS', '#cbcb41'], ts: ['TS', '#519aba'], html: ['<>', '#e37933'], css: ['#', '#519aba'], py: ['PY', '#5a9fd4'], json: ['{}', '#cbcb41'], md: ['M', '#519aba'], text: ['≡', 'var(--muted)'] };
+const ico = name => { const b = BADGES[langOf(name)]; return '<span class="badge" style="color:' + b[1] + '">' + esc(b[0]) + '</span>'; };
+
+const JS_RULES = [
+  ['com', /\/\/.*|\/\*[\s\S]*?\*\//],
+  ['str', /"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\[\s\S]|[^`\\])*`/],
+  ['num', /\b(?:0x[\da-fA-F]+|\d+(?:\.\d+)?)\b/],
+  ['kw', /\b(?:const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|class|extends|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|in|of|this|super|null|undefined|true|false|void|delete|yield|static|interface|type|enum)\b/],
+  ['typ', /\b[A-Z][\w$]*\b/],
+  ['fn', /\b[A-Za-z_$][\w$]*(?=\s*\()/]
+];
+const RULES = {
+  js: JS_RULES,
+  ts: JS_RULES,
+  css: [
+    ['com', /\/\*[\s\S]*?\*\//],
+    ['str', /"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'/],
+    ['dec', /@[\w-]+/],
+    ['num', /#[\da-fA-F]{3,8}\b/],
+    ['sel', /#[A-Za-z_-][\w-]*/],
+    ['prop', /[\w-]+(?=\s*:[^{};]*[;}])/],
+    ['num', /-?\b\d*\.?\d+(?:px|r?em|vh|vw|ms|s|deg|fr|ch)?\b/],
+    ['sel', /\.[A-Za-z_-][\w-]*/],
+    ['fn', /[\w-]+(?=\()/],
+    ['sel', /^[ \t]*[A-Za-z][\w-]*(?=\s*[,{]|[.#\[]|\s+[.#>+~\[A-Za-z])/m]
+  ],
+  html: [
+    ['com', new RegExp('<!\\x2d\\x2d[\\s\\S]*?\\x2d\\x2d>')],
+    ['kw', /<![A-Za-z][^>]*>/],
+    ['tagfull', /<\/?[A-Za-z][^>]*>/]
+  ],
+  py: [
+    ['com', /#.*/],
+    ['str', /"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'/],
+    ['dec', /@[\w.]+/],
+    ['num', /\b\d+(?:\.\d+)?\b/],
+    ['kw', /\b(?:def|class|return|if|elif|else|for|while|in|not|and|or|is|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|None|True|False|yield|async|await|global|nonlocal|del|assert)\b/],
+    ['fn', /\b[A-Za-z_]\w*(?=\()/]
+  ],
+  json: [
+    ['prop', /"(?:\\.|[^"\\\n])*"(?=\s*:)/],
+    ['str', /"(?:\\.|[^"\\\n])*"/],
+    ['num', /-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/],
+    ['kw', /\b(?:true|false|null)\b/]
+  ],
+  md: [
+    ['head', /^#{1,6}[ \t].*$/m],
+    ['com', /^>.*$/m],
+    ['str', /`[^`\n]+`/],
+    ['kw', /\*\*[^*\n]+\*\*/],
+    ['kw', /^[ \t]*(?:[-*+]|\d+\.)(?=[ \t])/m],
+    ['fn', /\[[^\]\n]*\]\([^)\n]*\)/]
+  ]
+};
+const COMPILED = {};
+function compile(l) {
+  if (!COMPILED[l]) COMPILED[l] = new RegExp(RULES[l].map(r => '(' + r[1].source + ')').join('|'), 'gm');
+  return COMPILED[l];
+}
+function hlTag(s) {
+  const m = /^(<\/?)([A-Za-z][\w-]*)([\s\S]*?)(\/?>)$/.exec(s);
+  if (!m || m[3].indexOf('<') !== -1) return esc(s);
+  const rest = m[3].replace(/([^\s=\/"']+)(\s*=\s*)?("[^"]*"|'[^']*'|[^\s"'>]+)?/g, (a, n, eq, v) =>
+    '<span class="k-attr">' + esc(n) + '</span>' + (eq ? esc(eq) : '') + (v ? '<span class="k-str">' + esc(v) + '</span>' : ''));
+  return '<span class="k-punc">' + esc(m[1]) + '</span><span class="k-tag">' + esc(m[2]) + '</span>' + rest + '<span class="k-punc">' + esc(m[4]) + '</span>';
+}
+function highlight(text, l) {
+  const rules = RULES[l];
+  if (!rules) return esc(text) + '\n';
+  const re = compile(l);
+  re.lastIndex = 0;
+  let out = '', last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m[0] === '') { re.lastIndex++; continue; }
+    out += esc(text.slice(last, m.index));
+    let gi = 1;
+    while (m[gi] === undefined) gi++;
+    const cls = rules[gi - 1][0], s = m[0];
+    out += cls === 'tagfull' ? hlTag(s) : '<span class="k-' + cls + '">' + esc(s) + '</span>';
+    last = m.index + s.length;
+  }
+  return out + esc(text.slice(last)) + '\n';
+}
+
+/* ---------- элементлар ва ўлчамлар ---------- */
+const app = $('#app'), ta = $('#ta'), hl = $('#hl'), gnums = $('#gnums'), editor = $('#editor');
+const curlineEl = $('#curline'), hitEl = $('#hit'), meas = $('#meas');
+const PADT = 8, PADL = 12;
+let LH = 21, CW = 8.4;
+let cur = null, lastLines = 0, hit = null, sideOpen = !mobileMQ.matches, curView = 'files';
+let busy = false, treeMode = null, confirmDel = null, rafId = 0;
+
+function applyFs() {
+  LH = Math.round(S.fs * 1.55);
+  document.documentElement.style.setProperty('--fs', S.fs + 'px');
+  document.documentElement.style.setProperty('--lh', LH + 'px');
+  $('#fsVal').textContent = S.fs;
+  measure();
+}
+function measure() {
+  const w = meas.getBoundingClientRect().width;
+  if (w > 0) CW = w / 50;
+  updateOverlays();
+}
+function applyTheme() {
+  const r = document.documentElement;
+  if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme);
+  $$('#segTheme button').forEach(b => b.classList.toggle('on', b.dataset.t === S.theme));
+}
+function setTheme(t) { S.theme = t; applyTheme(); saveSoon(); }
+function setFs(n) { S.fs = Math.min(24, Math.max(10, n)); applyFs(); saveSoon(); }
+
+let toastT = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.hidden = true; }, 2000);
+}
+
+/* ---------- файллар ---------- */
+const fileById = id => S.files.find(f => f.id === id);
+const unitOf = () => (cur && langOf(cur.name) === 'py') ? '    ' : '  ';
+
+function renderTabs() {
+  const tabs = $('#tabs');
+  tabs.innerHTML = S.open.map(id => {
+    const f = fileById(id);
+    return '<div class="tab' + (id === S.active ? ' on' : '') + '" data-id="' + id + '" role="tab">' + ico(f.name) +
+      '<span>' + esc(f.name) + '</span><button class="x" data-x="1" title="Ёпиш" aria-label="Ёпиш"><svg class="i s"><use href="#i-x"/></svg></button></div>';
+  }).join('');
+  const on = tabs.querySelector('.on');
+  if (on) {
+    const l = on.offsetLeft, r = l + on.offsetWidth;
+    if (l < tabs.scrollLeft) tabs.scrollLeft = l;
+    else if (r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollLeft = r - tabs.clientWidth;
+  }
+}
+
+function renderTree() {
+  const list = S.files.slice().sort((a, b) => a.name.localeCompare(b.name));
+  let h = '';
+  if (treeMode && treeMode.type === 'new') {
+    h += '<div class="row edit"><span class="badge" style="color:var(--muted)">≡</span><input id="tin" type="text" placeholder="файл.js" autocomplete="off" spellcheck="false"></div>';
+  }
+  list.forEach(f => {
+    if (treeMode && treeMode.type === 'ren' && treeMode.id === f.id) {
+      h += '<div class="row edit">' + ico(f.name) + '<input id="tin" type="text" value="' + esc(f.name) + '" autocomplete="off" spellcheck="false"></div>';
+    } else {
+      const del = confirmDel === f.id
+        ? '<button class="danger" data-act="del2">Ўчириш?</button>'
+        : '<button data-act="del" title="Ўчириш" aria-label="Ўчириш"><svg class="i s"><use href="#i-trash"/></svg></button>';
+      h += '<div class="row' + (f.id === S.active ? ' on' : '') + '" data-id="' + f.id + '" tabindex="0">' + ico(f.name) +
+        '<span class="nm">' + esc(f.name) + '</span><span class="ract"><button data-act="ren" title="Номини ўзгартириш" aria-label="Номини ўзгартириш"><svg class="i s"><use href="#i-pen"/></svg></button>' + del + '</span></div>';
+    }
+  });
+  if (!S.files.length && !treeMode) h += '<div class="hint">Файл йўқ. Юқоридаги тугма билан янги файл яратинг.</div>';
+  const tree = $('#tree');
+  tree.innerHTML = h;
+  const inp = $('#tin');
+  if (inp) {
+    inp.focus();
+    const dot = inp.value.lastIndexOf('.');
+    inp.setSelectionRange(0, dot > 0 ? dot : inp.value.length);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); finishEdit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+    });
+    inp.addEventListener('blur', () => finishEdit(true));
+  }
+}
+
+function validName(n) { return n && n.length <= 80 && !/[\/\\]/.test(n); }
+function uniqueName(n) {
+  if (!S.files.some(f => f.name === n)) return n;
+  const m = /^(.*?)(\.[^.]*)?$/.exec(n);
+  let i = 2;
+  while (S.files.some(f => f.name === m[1] + ' (' + i + ')' + (m[2] || ''))) i++;
+  return m[1] + ' (' + i + ')' + (m[2] || '');
+}
+function finishEdit(commit) {
+  const m = treeMode;
+  if (!m) return;
+  const inp = $('#tin');
+  const val = inp ? inp.value.trim() : '';
+  treeMode = null;
+  if (commit && val) {
+    if (!validName(val)) { toast('Файл номида / ва \\ бўлмаслиги керак'); }
+    else if (m.type === 'new') {
+      const ex = S.files.find(f => f.name === val);
+      if (ex) { renderTree(); openFile(ex.id); return; }
+      const f = { id: 'f' + (S.nextId++), name: val, text: '' };
+      S.files.push(f); saveSoon(); renderTree(); openFile(f.id); return;
+    } else if (m.type === 'ren') {
+      const f = fileById(m.id);
+      if (f && f.name !== val) {
+        if (S.files.some(x => x.name === val)) toast('Бундай номли файл бор');
+        else { f.name = val; saveSoon(); renderTabs(); if (cur && cur.id === f.id) updateLangStatus(); }
+      }
+    }
+  }
+  renderTree();
+}
+function startNew() { showView('files'); treeMode = { type: 'new' }; renderTree(); }
+function addFile(name, text) {
+  const f = { id: 'f' + (S.nextId++), name: uniqueName(name), text };
+  S.files.push(f); saveSoon(); renderTree(); openFile(f.id);
+}
+function deleteFile(id) {
+  S.files = S.files.filter(f => f.id !== id);
+  if (S.open.includes(id)) closeTab(id, true);
+  confirmDel = null; saveSoon(); renderTree();
+}
+
+function openFile(id) {
+  if (!fileById(id)) return;
+  saveView();
+  if (!S.open.includes(id)) S.open.push(id);
+  S.active = id;
+  renderTabs(); renderTree(); loadCurrent();
+  saveSoon();
+  if (mobileMQ.matches) setSide(false); else ta.focus();
+}
+function closeTab(id, silent) {
+  const i = S.open.indexOf(id);
+  if (i < 0) return;
+  if (S.active === id) saveView();
+  S.open.splice(i, 1);
+  if (S.active === id) S.active = S.open[Math.min(i, S.open.length - 1)] || null;
+  renderTabs(); if (!silent) renderTree(); loadCurrent(); saveSoon();
+}
+function saveView() {
+  if (cur) cur.view = { ss: ta.selectionStart, se: ta.selectionEnd, st: ta.scrollTop, sl: ta.scrollLeft };
+}
+function loadCurrent() {
+  cur = S.active ? fileById(S.active) : null;
+  $('#empty').hidden = !!cur;
+  ta.disabled = !cur;
+  hit = null;
+  if (!cur) {
+    ta.value = ''; hl.innerHTML = ''; gnums.textContent = ''; lastLines = 0;
+    updateLangStatus(); updateOverlays(); return;
+  }
+  ta.value = cur.text;
+  lastLines = 0;
+  renderCode();
+  const v = cur.view;
+  if (v) { ta.setSelectionRange(v.ss, v.se); ta.scrollTop = v.st; ta.scrollLeft = v.sl; }
+  else { ta.setSelectionRange(0, 0); ta.scrollTop = 0; ta.scrollLeft = 0; }
+  syncScroll();
+  updateLangStatus();
+  if (!$('#find').hidden) findGo(0);
+}
+function updateLangStatus() {
+  const l = cur ? langOf(cur.name) : 'text';
+  $('#stLang').textContent = cur ? LANGS[l] : '';
+  $('#stTab').textContent = 'Бўшлиқлар: ' + unitOf().length;
+  ta.style.tabSize = unitOf().length; hl.style.tabSize = unitOf().length;
+}
+
+/* ---------- муҳаррир ---------- */
+function countLines(t) { let n = 1; for (let i = 0; i < t.length; i++) if (t.charCodeAt(i) === 10) n++; return n; }
+function renderCode() {
+  if (!cur) return;
+  hl.innerHTML = highlight(ta.value, langOf(cur.name));
+  const n = countLines(ta.value);
+  if (n !== lastLines) {
+    lastLines = n;
+    let s = '';
+    for (let i = 1; i <= n; i++) s += i + '\n';
+    gnums.textContent = s;
+    editor.style.setProperty('--digits', Math.max(2, String(n).length));
+  }
+  syncScroll();
+}
+function syncScroll() {
+  hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft;
+  gnums.style.transform = 'translateY(' + (-ta.scrollTop) + 'px)';
+  updateOverlays();
+}
+function caretInfo() {
+  const v = ta.value, p = ta.selectionStart;
+  let ln = 0, ls = 0;
+  for (let i = 0; i < p; i++) if (v.charCodeAt(i) === 10) { ln++; ls = i + 1; }
+  return { ln, col: p - ls, sel: ta.selectionEnd - p };
+}
+function updateOverlays() {
+  if (!cur) { curlineEl.hidden = true; hitEl.hidden = true; $('#stPos').textContent = ''; $('#stSel').textContent = ''; return; }
+  const c = caretInfo();
+  $('#stPos').textContent = 'Қатор ' + (c.ln + 1) + ', Устун ' + (c.col + 1);
+  $('#stSel').textContent = c.sel ? '(' + c.sel + ' белги танланган)' : '';
+  curlineEl.hidden = c.sel > 0;
+  curlineEl.style.top = (PADT + c.ln * LH - ta.scrollTop) + 'px';
+  if (hit) {
+    hitEl.hidden = false;
+    hitEl.style.top = (PADT + hit.ln * LH - ta.scrollTop) + 'px';
+    hitEl.style.left = (PADL + hit.col * CW - ta.scrollLeft) + 'px';
+    hitEl.style.width = Math.max(hit.len, 1) * CW + 'px';
+    hitEl.style.height = LH + 'px';
+  } else hitEl.hidden = true;
+}
+function offsetToLC(off) {
+  const v = ta.value;
+  let ln = 0, ls = 0;
+  for (let i = 0; i < off; i++) if (v.charCodeAt(i) === 10) { ln++; ls = i + 1; }
+  return { ln, col: off - ls };
+}
+function reveal(ln, col, len) {
+  const top = PADT + ln * LH;
+  if (top < ta.scrollTop + LH || top > ta.scrollTop + ta.clientHeight - LH * 2) ta.scrollTop = Math.max(0, top - ta.clientHeight / 3);
+  const l = PADL + col * CW, r = l + len * CW;
+  if (l < ta.scrollLeft) ta.scrollLeft = Math.max(0, l - 40);
+  else if (r > ta.scrollLeft + ta.clientWidth - 40) ta.scrollLeft = r - ta.clientWidth + 80;
+  syncScroll();
+}
+
+ta.addEventListener('input', () => {
+  if (!cur) return;
+  cur.text = ta.value;
+  if ($('#find').hidden) hit = null;
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(renderCode);
+  saveSoon();
+});
+ta.addEventListener('scroll', syncScroll);
+ta.addEventListener('pointerdown', () => { if ($('#find').hidden) hit = null; });
+document.addEventListener('selectionchange', () => { if (document.activeElement === ta) updateOverlays(); });
+window.addEventListener('resize', () => { updateOverlays(); });
+
+function insertText(t, back) {
+  ta.focus();
+  busy = true;
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, t); } catch (e) { ok = false; }
+  if (!ok) { ta.setRangeText(t, ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input')); }
+  busy = false;
+  if (back) { const p = ta.selectionEnd - back; ta.setSelectionRange(p, p); }
+}
+const PAIRS = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
+const CLOSERS = ')]}"\'`';
+function smartChar(ch) {
+  if (!cur) return false;
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const next = v[e] || '', prev = v[s - 1] || '';
+  if (s === e && CLOSERS.indexOf(ch) !== -1 && next === ch) { ta.setSelectionRange(s + 1, s + 1); return true; }
+  if (PAIRS[ch]) {
+    const quote = ch === '"' || ch === "'" || ch === '`';
+    if (s !== e) {
+      const inner = v.slice(s, e);
+      insertText(ch + inner + PAIRS[ch]);
+      ta.setSelectionRange(s + 1, s + 1 + inner.length);
+      return true;
+    }
+    if (quote && /[\w]/.test(prev)) return false;
+    if (!next || /[\s)\]}>;,.:]/.test(next)) { insertText(ch + PAIRS[ch], 1); return true; }
+  }
+  return false;
+}
+function typeKey(ch) {
+  if (!smartChar(ch)) insertText(ch);
+}
+function newline() {
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const ls = v.lastIndexOf('\n', s - 1) + 1;
+  const line = v.slice(ls, s);
+  const ind = /^[ \t]*/.exec(line)[0];
+  const prev = v[s - 1], next = v[e];
+  const lg = langOf(cur.name), unit = unitOf();
+  const last = line.trimEnd().slice(-1);
+  let extra = '';
+  if ('{(['.indexOf(last) !== -1 && last !== '' || (lg === 'py' && last === ':')) extra = unit;
+  if ((prev === '{' && next === '}') || (prev === '(' && next === ')') || (prev === '[' && next === ']')) {
+    insertText('\n' + ind + extra + '\n' + ind, ind.length + 1);
+  } else insertText('\n' + ind + extra);
+}
+ta.addEventListener('beforeinput', e => {
+  if (busy || !cur) return;
+  const t = e.inputType;
+  if (t === 'insertLineBreak' || t === 'insertParagraph') { e.preventDefault(); newline(); return; }
+  if (t === 'insertText' && e.data && e.data.length === 1) { if (smartChar(e.data)) e.preventDefault(); return; }
+  if (t === 'deleteContentBackward') {
+    const s = ta.selectionStart, en = ta.selectionEnd, v = ta.value;
+    if (s === en && s > 0 && PAIRS[v[s - 1]] && PAIRS[v[s - 1]] === v[s]) {
+      e.preventDefault();
+      ta.setSelectionRange(s - 1, s + 1);
+      busy = true; try { document.execCommand('delete'); } catch (x) {} busy = false;
+    }
+  }
+});
+function indentLines(dir) {
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd, unit = unitOf();
+  if (dir > 0 && s === e) { insertText(unit); return; }
+  const ls = v.lastIndexOf('\n', s - 1) + 1;
+  let le = v.indexOf('\n', e > s && v[e - 1] === '\n' ? e - 1 : e);
+  if (le < 0) le = v.length;
+  const re = new RegExp('^(?:' + unit + '|\\t| {1,' + unit.length + '})');
+  const out = v.slice(ls, le).split('\n').map(x => dir > 0 ? (x.length ? unit + x : x) : x.replace(re, '')).join('\n');
+  ta.setSelectionRange(ls, le);
+  insertText(out);
+  ta.setSelectionRange(ls, ls + out.length);
+}
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); indentLines(e.shiftKey ? -1 : 1); }
+});
+const HC0 = '<!' + '-- ', HC1 = ' --' + '>';
+function toggleComment() {
+  if (!cur) return;
+  const l = langOf(cur.name);
+  let a, b = '';
+  if (l === 'js' || l === 'ts') a = '//'; else if (l === 'py') a = '#';
+  else if (l === 'css') { a = '/*'; b = '*/'; }
+  else if (l === 'html' || l === 'md') { a = HC0.trim(); b = HC1.trim(); }
+  else { toast('Бу файл турида изоҳ белгиси йўқ'); return; }
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const ls = v.lastIndexOf('\n', s - 1) + 1;
+  let le = v.indexOf('\n', e > s && v[e - 1] === '\n' ? e - 1 : e);
+  if (le < 0) le = v.length;
+  const lines = v.slice(ls, le).split('\n');
+  const isC = x => { const t = x.trim(); return t.startsWith(a) && (!b || t.endsWith(b)); };
+  const all = lines.every(x => !x.trim() || isC(x));
+  const out = lines.map(x => {
+    if (!x.trim()) return x;
+    const ind = /^\s*/.exec(x)[0];
+    let rest = x.slice(ind.length);
+    if (all) {
+      rest = rest.slice(a.length); if (rest[0] === ' ') rest = rest.slice(1);
+      if (b) { rest = rest.trimEnd(); rest = rest.slice(0, rest.length - b.length); rest = rest.replace(/ $/, ''); }
+      return ind + rest;
+    }
+    return ind + a + ' ' + rest + (b ? ' ' + b : '');
+  }).join('\n');
+  ta.setSelectionRange(ls, le);
+  insertText(out);
+  ta.setSelectionRange(ls, ls + out.length);
+}
+
+/* ---------- қўшимча тугмалар (телефон) ---------- */
+(function buildKeys() {
+  const keys = ['Tab', 'undo', 'redo', '{', '}', '(', ')', '[', ']', '<', '>', ';', ':', '"', "'", '=', '/', '\\', '`', '.', ',', '!', '?', '&', '|', '_', '-', '+', '*', '#', '$'];
+  const labels = { Tab: '⇥', undo: '↶', redo: '↷' };
+  const k = $('#keys');
+  k.innerHTML = keys.map(x => '<button data-k="' + esc(x) + '" aria-label="' + esc(x) + '">' + esc(labels[x] || x) + '</button>').join('');
+  k.addEventListener('mousedown', e => e.preventDefault());
+  k.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || !cur) return;
+    const x = b.dataset.k;
+    ta.focus();
+    if (x === 'Tab') indentLines(1);
+    else if (x === 'undo') document.execCommand('undo');
+    else if (x === 'redo') document.execCommand('redo');
+    else typeKey(x);
+  });
+})();
+
+/* ---------- топиш ---------- */
+const fq = $('#fq');
+let fMatches = [], fIdx = -1;
+function findAll() {
+  fMatches = [];
+  const q = fq.value;
+  if (!q || !cur) return;
+  const t = ta.value.toLowerCase(), qq = q.toLowerCase();
+  let i = 0;
+  while ((i = t.indexOf(qq, i)) !== -1 && fMatches.length < 5000) { fMatches.push(i); i += Math.max(1, qq.length); }
+}
+function findGo(dir) {
+  findAll();
+  const n = fMatches.length, q = fq.value;
+  if (!n) { fIdx = -1; hit = null; $('#fc').textContent = q ? '0 / 0' : ''; updateOverlays(); return; }
+  if (dir === 0 || fIdx < 0) {
+    const p = ta.selectionStart;
+    fIdx = fMatches.findIndex(x => x >= p);
+    if (fIdx < 0) fIdx = 0;
+  } else fIdx = (fIdx + dir + n) % n;
+  const off = fMatches[fIdx], lc = offsetToLC(off);
+  hit = { ln: lc.ln, col: lc.col, len: q.length };
+  ta.setSelectionRange(off, off + q.length);
+  $('#fc').textContent = (fIdx + 1) + ' / ' + n;
+  reveal(lc.ln, lc.col, q.length);
+}
+function openFind() {
+  if (!cur) return;
+  const f = $('#find');
+  f.hidden = false;
+  const s = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+  if (s && s.indexOf('\n') === -1 && s.length < 80) fq.value = s;
+  fq.focus(); fq.select();
+  fIdx = -1;
+  if (fq.value) findGo(0);
+}
+function closeFind() {
+  $('#find').hidden = true; hit = null; updateOverlays();
+  if (cur && !mobileMQ.matches) ta.focus();
+}
+fq.addEventListener('input', () => { fIdx = -1; findGo(0); });
+fq.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); findGo(e.shiftKey ? -1 : 1); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
+});
+$('#fNext').addEventListener('click', () => findGo(1));
+$('#fPrev').addEventListener('click', () => findGo(-1));
+$('#fClose').addEventListener('click', closeFind);
+$('#btnFind').addEventListener('click', () => { if ($('#find').hidden) openFind(); else closeFind(); });
+
+/* ---------- ҳамма файллардан қидириш ---------- */
+let gqT = null;
+function globalSearch() {
+  const q = $('#gq').value, box = $('#gres');
+  if (!q) { box.innerHTML = '<div class="hint">Қидириладиган сўзни киритинг.</div>'; return; }
+  const ql = q.toLowerCase();
+  let total = 0, h = '';
+  S.files.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(f => {
+    const lines = f.text.split('\n');
+    let part = '', cnt = 0;
+    for (let i = 0; i < lines.length && total < 300; i++) {
+      const lo = lines[i].toLowerCase();
+      let from = 0, idx;
+      while ((idx = lo.indexOf(ql, from)) !== -1 && total < 300) {
+        const line = lines[i];
+        const a = Math.max(0, idx - 24);
+        const pre = (a > 0 ? '…' : '') + esc(line.slice(a, idx));
+        part += '<div class="mr" data-id="' + f.id + '" data-ln="' + i + '" data-col="' + idx + '" data-len="' + q.length + '">' + pre + '<b>' + esc(line.slice(idx, idx + q.length)) + '</b>' + esc(line.slice(idx + q.length, idx + q.length + 80)) + '</div>';
+        cnt++; total++; from = idx + Math.max(1, ql.length);
+      }
+    }
+    if (cnt) h += '<div class="gf">' + ico(f.name) + '<span>' + esc(f.name) + '</span><span class="cnt">' + cnt + '</span></div>' + part;
+  });
+  box.innerHTML = h || '<div class="hint">Ҳеч нарса топилмади.</div>';
+}
+$('#gq').addEventListener('input', () => { clearTimeout(gqT); gqT = setTimeout(globalSearch, 120); });
+$('#gres').addEventListener('click', e => {
+  const r = e.target.closest('.mr');
+  if (!r) return;
+  openFile(r.dataset.id);
+  const ln = +r.dataset.ln, col = +r.dataset.col, len = +r.dataset.len;
+  const v = ta.value;
+  let off = 0;
+  for (let i = 0; i < ln; i++) off = v.indexOf('\n', off) + 1;
+  ta.setSelectionRange(off + col, off + col + len);
+  hit = { ln, col, len };
+  reveal(ln, col, len);
+});
+
+/* ---------- ишга тушириш ---------- */
+const out = $('#out'), web = $('#web'), panel = $('#panel');
+let panelTab = 'out', worker = null, workerT = null, workerDone = false;
+function workerMain() {
+  const fmt = a => a.map(x => {
+    if (typeof x === 'string') return x;
+    if (typeof x === 'function') return String(x);
+    try { const j = JSON.stringify(x, null, 2); return j === undefined ? String(x) : j; } catch (e) { return String(x); }
+  }).join(' ');
+  ['log', 'info', 'warn', 'error', 'debug'].forEach(k => {
+    console[k] = (...a) => self.postMessage({ t: k === 'debug' ? 'log' : k, m: fmt(a) });
+  });
+  self.onmessage = async e => {
+    try {
+      const AF = Object.getPrototypeOf(async function () {}).constructor;
+      await new AF(e.data)();
+    } catch (err) {
+      self.postMessage({ t: 'error', m: String((err && err.stack) || err) });
+    }
+    self.postMessage({ t: 'done' });
+  };
+}
+function outLine(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'l-' + cls;
+  d.textContent = text;
+  out.appendChild(d);
+  out.scrollTop = out.scrollHeight;
+}
+function stopWorker() {
+  clearTimeout(workerT);
+  if (worker) { worker.terminate(); worker = null; }
+}
+function runJS(name, code) {
+  out.textContent = '';
+  stopWorker();
+  workerDone = false;
+  outLine('> ' + name + ' ишга тушди', 'sys');
+  try {
+    const url = URL.createObjectURL(new Blob(['(' + workerMain.toString() + ')()'], { type: 'text/javascript' }));
+    worker = new Worker(url);
+    URL.revokeObjectURL(url);
+    worker.onmessage = e => {
+      const d = e.data;
+      if (d.t === 'done') { workerDone = true; outLine('Тугади.', 'sys'); }
+      else outLine(d.m, d.t === 'log' || d.t === 'info' ? 'log' : d.t);
+    };
+    worker.onerror = e => { outLine(e.message || 'Хато юз берди', 'error'); };
+    worker.postMessage(code);
+    workerT = setTimeout(() => {
+      const was = workerDone;
+      stopWorker();
+      if (!was) outLine('Вақт тугади (5 сония). Дастур тўхтатилди.', 'error');
+    }, 5000);
+  } catch (err) {
+    outLine('Ишга тушириб бўлмади: ' + err.message, 'error');
+  }
+}
+function runHTML(f) {
+  const get = n => S.files.find(x => x.name === n.replace(/^\.\//, ''));
+  let html = f.text;
+  html = html.replace(/<link\b[^>]*>/gi, m => {
+    const h = /href=["']([^"']+)["']/i.exec(m);
+    const g = h && /stylesheet/i.test(m) ? get(h[1]) : null;
+    return g ? '<style>' + g.text + '</style>' : m;
+  });
+  html = html.replace(/<script\b([^>]*)src=["']([^"']+)["']([^>]*)>\s*<\/script>/gi, (m, a, h, b) => {
+    const g = get(h);
+    return g ? '<script' + a + b + '>' + g.text.replace(/<\/script/gi, '<\\/script') + '<\/script>' : m;
+  });
+  web.srcdoc = html;
+}
+function setPanelTab(t) {
+  panelTab = t;
+  $$('#ptabs button').forEach(b => b.classList.toggle('on', b.dataset.p === t));
+  out.hidden = t !== 'out';
+  web.hidden = t !== 'web';
+}
+function showPanel(t) { panel.hidden = false; setPanelTab(t || panelTab); afterPanel(); }
+function togglePanel() { if (panel.hidden) showPanel(); else { panel.hidden = true; afterPanel(); } }
+function afterPanel() {
+  $('#stPanel').textContent = panel.hidden ? 'Чиқиш' : 'Чиқишни ёпиш';
+  setTimeout(updateOverlays, 0);
+}
+function run() {
+  if (!cur) { toast('Аввал файл очинг'); return; }
+  const l = langOf(cur.name);
+  if (l === 'js') { showPanel('out'); runJS(cur.name, cur.text); }
+  else if (l === 'html') { showPanel('web'); runHTML(cur); }
+  else toast('Фақат JS ва HTML файлларини ишга тушириш мумкин');
+}
+$('#btnRun').addEventListener('click', run);
+$('#btnPanel').addEventListener('click', togglePanel);
+$('#stPanel').addEventListener('click', togglePanel);
+$('#pClose').addEventListener('click', () => { panel.hidden = true; afterPanel(); });
+$('#pClear').addEventListener('click', () => { out.textContent = ''; });
+$('#ptabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPanelTab(b.dataset.p); });
+
+/* ---------- ёнбош панель ---------- */
+function setSide(o) {
+  sideOpen = o;
+  app.classList.toggle('sideopen', o);
+  $$('.act[data-view]').forEach(b => b.classList.toggle('on', o && b.dataset.view === curView));
+  setTimeout(updateOverlays, 0);
+}
+function showView(v) {
+  curView = v;
+  ['files', 'search', 'settings'].forEach(n => { $('#view-' + n).hidden = n !== v; });
+  setSide(true);
+  if (v === 'search') { globalSearch(); setTimeout(() => $('#gq').focus(), 30); }
+}
+$$('.act[data-view]').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.view;
+  if (sideOpen && curView === v) setSide(false); else showView(v);
+}));
+$('#backdrop').addEventListener('click', () => setSide(false));
+$('#btnNew').addEventListener('click', startNew);
+$('#btnOpen').addEventListener('click', () => $('#filein').click());
+$('#eNew').addEventListener('click', startNew);
+$('#eOpen').addEventListener('click', () => $('#filein').click());
+$('#ePal').addEventListener('click', () => openPal(''));
+
+$('#tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab');
+  if (!t) return;
+  if (e.target.closest('[data-x]')) closeTab(t.dataset.id); else openFile(t.dataset.id);
+});
+$('#tabs').addEventListener('auxclick', e => {
+  const t = e.target.closest('.tab');
+  if (t && e.button === 1) { e.preventDefault(); closeTab(t.dataset.id); }
+});
+let delT = null;
+$('#tree').addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  const row = e.target.closest('.row[data-id]');
+  if (!row) return;
+  const id = row.dataset.id;
+  if (confirmDel && !(act && act.dataset.act === 'del2')) {
+    confirmDel = null;
+    if (act) { renderTree(); return; }
+  }
+  if (act) {
+    e.stopPropagation();
+    if (act.dataset.act === 'ren') { treeMode = { type: 'ren', id }; renderTree(); }
+    else if (act.dataset.act === 'del') { confirmDel = id; renderTree(); clearTimeout(delT); delT = setTimeout(() => { if (confirmDel) { confirmDel = null; renderTree(); } }, 3500); }
+    else if (act.dataset.act === 'del2') { deleteFile(id); }
+    return;
+  }
+  openFile(id);
+});
+$('#tree').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('row')) openFile(e.target.dataset.id);
+});
+
+$('#segTheme').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTheme(b.dataset.t); });
+$('#fsMinus').addEventListener('click', () => setFs(S.fs - 1));
+$('#fsPlus').addEventListener('click', () => setFs(S.fs + 1));
+let resetT = null;
+$('#btnReset').addEventListener('click', () => {
+  const b = $('#btnReset');
+  if (!b.classList.contains('warn')) {
+    b.classList.add('warn'); b.classList.remove('alt'); b.textContent = 'Ҳамма файллар ўчади. Тасдиқлаш';
+    clearTimeout(resetT);
+    resetT = setTimeout(() => { b.classList.remove('warn'); b.classList.add('alt'); b.textContent = 'Намуна файлларни қайтариш'; }, 4000);
+    return;
+  }
+  clearTimeout(resetT);
+  b.classList.remove('warn'); b.classList.add('alt'); b.textContent = 'Намуна файлларни қайтариш';
+  const keepTheme = S.theme, keepFs = S.fs;
+  S = fresh(); S.theme = keepTheme; S.fs = keepFs;
+  cur = null; renderAll(); persist(); toast('Намуна файллар қайтарилди');
+});
+
+$('#filein').addEventListener('change', async e => {
+  const inp = e.target;
+  for (const f of Array.from(inp.files)) {
+    if (f.size > 1500000) { toast(f.name + ' жуда катта'); continue; }
+    try {
+      const text = await f.text();
+      if (text.indexOf('\u0000') !== -1) { toast(f.name + ' матн файли эмас'); continue; }
+      addFile(f.name, text);
+    } catch (err) { toast(f.name + ' очилмади'); }
+  }
+  inp.value = '';
+});
+
+async function copyAll() {
+  if (!cur) return;
+  try { await navigator.clipboard.writeText(ta.value); toast('Нусха олинди'); }
+  catch (e) { ta.focus(); ta.select(); toast('Матн белгиланди. Нусха олинг'); }
+}
+
+/* ---------- буйруқлар палитраси ---------- */
+const pal = $('#pal'), palq = $('#palq'), pall = $('#pall');
+let palItems = [], palIdx = 0;
+const COMMANDS = [
+  { label: 'Янги файл', run: startNew },
+  { label: 'Қурилмадан файл очиш', run: () => $('#filein').click() },
+  { label: 'Ишга тушириш', key: 'Ctrl+Enter', run: run },
+  { label: 'Чиқиш панелини кўрсатиш ёки яшириш', key: 'Ctrl+J', run: togglePanel },
+  { label: 'Файлдан топиш', key: 'Ctrl+F', run: openFind },
+  { label: 'Ҳамма файллардан қидириш', key: 'Ctrl+Shift+F', run: () => showView('search') },
+  { label: 'Қаторни изоҳга ўтказиш', key: 'Ctrl+/', run: toggleComment },
+  { label: 'Ёнбош панелни кўрсатиш ёки яшириш', key: 'Ctrl+B', run: () => setSide(!sideOpen) },
+  { label: 'Файл матнидан нусха олиш', run: copyAll },
+  { label: 'Жорий файлни ёпиш', run: () => { if (S.active) closeTab(S.active); } },
+  { label: 'Мавзу: қоронғи', run: () => setTheme('dark') },
+  { label: 'Мавзу: ёруғ', run: () => setTheme('light') },
+  { label: 'Мавзу: тизим бўйича', run: () => setTheme('auto') },
+  { label: 'Ҳарфни катталаштириш', run: () => setFs(S.fs + 1) },
+  { label: 'Ҳарфни кичиклаштириш', run: () => setFs(S.fs - 1) }
+];
+function fuzzy(s, q) {
+  if (!q) return true;
+  s = s.toLowerCase();
+  let i = 0;
+  for (const ch of s) { if (ch === q[i]) i++; if (i === q.length) return true; }
+  return false;
+}
+function buildPal() {
+  let q = palq.value;
+  const cmdOnly = q.startsWith('>');
+  if (cmdOnly) q = q.slice(1);
+  q = q.trim().toLowerCase();
+  palItems = [];
+  if (!cmdOnly) {
+    const fl = S.files.filter(f => fuzzy(f.name, q)).sort((a, b) => a.name.localeCompare(b.name));
+    if (fl.length) { palItems.push({ h: 'Файллар' }); fl.forEach(f => palItems.push({ k: 'file', id: f.id, label: f.name })); }
+  }
+  const cl = COMMANDS.filter(c => fuzzy(c.label, q));
+  if (cl.length) { palItems.push({ h: 'Буйруқлар' }); cl.forEach(c => palItems.push({ k: 'cmd', label: c.label, key: c.key, run: c.run })); }
+  const sel = palItems.findIndex(x => !x.h);
+  palIdx = sel < 0 ? 0 : sel;
+  drawPal();
+}
+function drawPal() {
+  if (!palItems.length) { pall.innerHTML = '<div class="pnone">Ҳеч нарса топилмади</div>'; return; }
+  pall.innerHTML = palItems.map((x, i) => x.h
+    ? '<div class="ph">' + esc(x.h) + '</div>'
+    : '<div class="pi' + (i === palIdx ? ' on' : '') + '" data-i="' + i + '"><span class="pn">' + (x.k === 'file' ? ico(x.label) : '') + esc(x.label) + '</span>' + (x.key ? '<span class="pk">' + esc(x.key) + '</span>' : '') + '</div>').join('');
+  const on = pall.querySelector('.pi.on');
+  if (on) { const t = on.offsetTop, b = t + on.offsetHeight; if (t < pall.scrollTop) pall.scrollTop = t - 24; else if (b > pall.scrollTop + pall.clientHeight) pall.scrollTop = b - pall.clientHeight; }
+}
+function openPal(prefix) { pal.hidden = false; palq.value = prefix || ''; buildPal(); palq.focus(); }
+function closePal() { pal.hidden = true; if (cur && !mobileMQ.matches) ta.focus(); }
+function palRun(i) {
+  const x = palItems[i];
+  if (!x || x.h) return;
+  pal.hidden = true;
+  if (x.k === 'file') openFile(x.id); else x.run();
+}
+palq.addEventListener('input', buildPal);
+palq.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const d = e.key === 'ArrowDown' ? 1 : -1;
+    let i = palIdx;
+    for (let n = 0; n < palItems.length; n++) { i = (i + d + palItems.length) % palItems.length; if (!palItems[i].h) break; }
+    palIdx = i; drawPal();
+  } else if (e.key === 'Enter') { e.preventDefault(); palRun(palIdx); }
+  else if (e.key === 'Escape') { e.preventDefault(); closePal(); }
+});
+pall.addEventListener('click', e => { const it = e.target.closest('.pi'); if (it) palRun(+it.dataset.i); });
+pal.addEventListener('mousedown', e => { if (e.target === pal) closePal(); });
+$('#btnPal').addEventListener('click', () => openPal('>'));
+
+/* ---------- клавиатура ---------- */
+window.addEventListener('keydown', e => {
+  const mod = e.ctrlKey || e.metaKey, k = (e.key || '').toLowerCase();
+  if (mod && k === 's') { e.preventDefault(); persist(); toast('Сақланди'); }
+  else if (mod && k === 'p') { e.preventDefault(); openPal(e.shiftKey ? '>' : ''); }
+  else if (mod && e.shiftKey && k === 'f') { e.preventDefault(); showView('search'); }
+  else if (mod && k === 'f') { e.preventDefault(); openFind(); }
+  else if (mod && k === 'b') { e.preventDefault(); setSide(!sideOpen); }
+  else if (mod && (k === 'j' || k === '`')) { e.preventDefault(); togglePanel(); }
+  else if (mod && k === 'enter') { e.preventDefault(); run(); }
+  else if (mod && k === '/' && document.activeElement === ta) { e.preventDefault(); toggleComment(); }
+  else if (k === 'escape') {
+    if (!pal.hidden) closePal();
+    else if (!$('#find').hidden) closeFind();
+    else if (mobileMQ.matches && sideOpen) setSide(false);
+  }
+});
+
+/* ---------- бошлаш ---------- */
+function renderAll() {
+  renderTree(); renderTabs(); loadCurrent();
+}
+applyTheme();
+applyFs();
+setSide(sideOpen);
+setPanelTab('out');
+afterPanel();
+renderAll();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+setTimeout(measure, 400);
+})();
+</script>
+
+</html>
